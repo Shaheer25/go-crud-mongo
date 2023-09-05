@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Define a struct for your data model
 type Item struct {
 	ID    primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Name  string             `json:"name" bson:"name"`
@@ -24,6 +25,11 @@ var client *mongo.Client
 func init() {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 	client, _ = mongo.Connect(context.Background(), clientOptions)
+	if client != nil {
+		fmt.Println("Connected to DB")
+	} else {
+		fmt.Println("Error Connecting to DB")
+	}
 }
 
 func createItem(c *gin.Context) {
@@ -108,7 +114,10 @@ func deleteItem(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Item deleted successfully"})
 }
-
+func TimeTaken(t time.Time) {
+	elapsed := time.Since(t)
+	log.Printf("Time Taken for Execution %v", elapsed)
+}
 func main() {
 	r := gin.Default()
 
@@ -116,7 +125,9 @@ func main() {
 	r.GET("/items", getItems)
 	r.PUT("/items/:id", updateItem)
 	r.DELETE("/items/:id", deleteItem)
-
+	defer TimeTaken(time.Now())
+	time.Sleep(time.Millisecond)
 	fmt.Println("Server is running on :8080")
+
 	r.Run(":5000")
 }
