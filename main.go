@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,7 +25,12 @@ type Item struct {
 var client *mongo.Client
 
 func init() {
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading Environmental file")
+	}
+	mongoUrl := os.Getenv("mongodb_url")
+	clientOptions := options.Client().ApplyURI(mongoUrl)
 	client, _ = mongo.Connect(context.Background(), clientOptions)
 	if client != nil {
 		fmt.Println("Connected to DB")
@@ -51,7 +58,6 @@ func createItem(c *gin.Context) {
 	})
 }
 
-// Get all items
 func getItems(c *gin.Context) {
 	collection := client.Database("mydb").Collection("items")
 	cursor, err := collection.Find(context.Background(), bson.M{})
@@ -120,14 +126,17 @@ func TimeTaken(t time.Time) {
 }
 func main() {
 	r := gin.Default()
+	r.Use(gin.Logger())
 
-	r.POST("/items", createItem)
+	r.POST("/users", createItem)
 	r.GET("/items", getItems)
 	r.PUT("/items/:id", updateItem)
 	r.DELETE("/items/:id", deleteItem)
 	defer TimeTaken(time.Now())
 	time.Sleep(time.Millisecond)
-	fmt.Println("Server is running on :8080")
-
-	r.Run(":5000")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	r.Run(":" + port)
 }
