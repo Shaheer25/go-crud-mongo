@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  go-crud:
+      build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+          DEV: "true"
+      container_name: go-crud
+      ports:
+        - "8080:8080"
+      expose:
+        - "8080"
+      env_file:
+      - .env
+      networks:
+      - go-crud-net
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - 27017:27017
+    networks:
+      - go-crud-net
+
+networks:
+  go-crud-net:
+    external: true
